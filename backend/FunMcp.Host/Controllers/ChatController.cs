@@ -38,6 +38,77 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         return chatClient.GetStreamingResponseAsync(chatMessages, chatOptions);
     }
 
+    [HttpGet]
+    [Route("agent/tools/{agentId}")]
+    public async Task<Dictionary<string, IList<McpClientToolDto>>> GetAgentTools(string agentId)
+    {
+        var application = await CheckApiKey();
+
+        var agent = await GetAgentAsync(agentId, application!.Id);
+
+        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+
+        var mcpServers = (await dbContext.McpServers.Where(x => mcpServerIds.Contains(x.Id)).ToListAsync())
+            .ToDictionary(x => x.Id, x => x);
+
+        var toolsDic = new Dictionary<string, IList<McpClientToolDto>>();
+        foreach (var mcpServerId in mcpServerIds)
+        {
+            if (mcpServerState.McpServerTools.TryGetValue(mcpServerId, out var tools))
+            {
+                toolsDic[mcpServers[mcpServerId].Name] = tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description }).ToList();
+            }
+        }
+
+        return toolsDic;
+    }
+
+    [HttpGet]
+    [Route("agent/tools/{agentId}/{mcpId}")]
+    public async Task<IList<McpClientToolDto>> GetAgentTools(string agentId, string mcpId)
+    {
+        var application = await CheckApiKey();
+
+        var agent = await GetAgentAsync(agentId, application!.Id);
+
+        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+        if (mcpServerIds.Contains(mcpId))
+        {
+            if (mcpServerState.McpServerTools.TryGetValue(mcpId, out var tools))
+            {
+                return [.. tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description })];
+            }
+
+        }
+
+        return [];
+    }
+
+    [HttpGet]
+    [Route("agent/mcp/{agentId}")]
+    public async Task<Dictionary<string, McpServerInfoDto>> GetAgentMcp(string agentId)
+    {
+        var application = await CheckApiKey();
+
+        var agent = await GetAgentAsync(agentId, application!.Id);
+
+        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+
+        var mcpServers = (await dbContext.McpServers.Where(x => mcpServerIds.Contains(x.Id)).ToListAsync())
+            .ToDictionary(x => x.Id, x => x);
+
+        var mcpDic = new Dictionary<string, McpServerInfoDto>();
+        foreach (var mcpServerId in mcpServerIds)
+        {
+            if (mcpServerState.McpServers.TryGetValue(mcpServerId, out var mcpServer))
+            {
+                mcpDic[mcpServers[mcpServerId].Name] = new McpServerInfoDto { Id = mcpServers[mcpServerId].Id, Name = mcpServer.ServerInfo.Name, Version = mcpServer.ServerInfo.Version };
+            }
+        }
+
+        return mcpDic;
+    }
+
     private async Task<List<string>> GetMcpServerIds(string agentId)
     {
         var mcpServerIds = await memoryCache.GetOrCreateAsync(agentId, async entry =>
