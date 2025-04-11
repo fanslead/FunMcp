@@ -29,6 +29,9 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         var chatOptions = new ChatOptions
         {
             ModelId = agent.ModelId,
+            Temperature = agent.Temperature,
+            TopP = agent.TopP,
+            MaxOutputTokens = agent.MaxOutputTokens,
             Tools = [.. tools ?? []]
         };
 
