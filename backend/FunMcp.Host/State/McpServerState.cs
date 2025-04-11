@@ -1,6 +1,6 @@
 ﻿namespace FunMcp.Host.State;
 
-public class McpServerState
+public class McpServerState(ILoggerFactory loggerFactory)
 {
     public readonly IDictionary<string, IMcpClient> McpServers = new Dictionary<string, IMcpClient>();
 
@@ -8,7 +8,12 @@ public class McpServerState
 
     public async Task<(IMcpClient, IList<McpClientTool>)> CreateStdioAsync(string id, StdioClientTransport stdioClientTransport, CancellationToken cancellationToken = default)
     {
-        var client = await McpClientFactory.CreateAsync(stdioClientTransport, cancellationToken: cancellationToken);
+        if (McpServers.ContainsKey(id))
+        {
+            return (McpServers[id], McpServerTools[id]);
+        }
+
+        var client = await McpClientFactory.CreateAsync(stdioClientTransport, loggerFactory: loggerFactory, cancellationToken: cancellationToken);
 
         var tools = await client.ListToolsAsync();
 
@@ -20,7 +25,12 @@ public class McpServerState
 
     public async Task<(IMcpClient, IList<McpClientTool>)> CreateSseAsync(string id, SseClientTransport sseClientTransport, CancellationToken cancellationToken = default)
     {
-        var client = await McpClientFactory.CreateAsync(sseClientTransport, cancellationToken: cancellationToken);
+        if (McpServers.ContainsKey(id))
+        {
+            return (McpServers[id], McpServerTools[id]);
+        }
+
+        var client = await McpClientFactory.CreateAsync(sseClientTransport, loggerFactory: loggerFactory, cancellationToken: cancellationToken);
 
         var tools = await client.ListToolsAsync();
 

@@ -1,6 +1,6 @@
 ﻿namespace FunMcp.Host.Factory;
 
-public class AIClientFactory(IOptionsMonitor<AIOptions> options) : IAIClientFactory
+public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory loggerFactory) : IAIClientFactory
 {
     private readonly Dictionary<string, IChatClient> ChatClientCache = [];
     public IChatClient CreateChatClient(string? name = null)
@@ -12,14 +12,14 @@ public class AIClientFactory(IOptionsMonitor<AIOptions> options) : IAIClientFact
             return cacheClient;
         }
 
-        if(options.CurrentValue.Configs.TryGetValue(aiName, out var clientConfig))
+        if (options.CurrentValue.Configs.TryGetValue(aiName, out var clientConfig))
         {
             var type = clientConfig.Type;
             if(type.Equals("AzureOpenAI", StringComparison.OrdinalIgnoreCase))
             {
                 var azureClient = new AzureOpenAIClient(new Uri(clientConfig.Endpoint!), new ApiKeyCredential(clientConfig.ApiKey!));
                
-                var chatClient = azureClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder().UseFunctionInvocation().Build();
+                var chatClient = azureClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder().UseFunctionInvocation(loggerFactory: loggerFactory).Build();
                 ChatClientCache.TryAdd(aiName, chatClient);
                 return chatClient;
             }

@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.Configure<AIConfigOptions>(config => builder.Configuration.GetSection("AIConfig").Bind(config));
+builder.Services.Configure<AIOptions>(builder.Configuration.GetSection("AIConfig"));
 
 builder.Services.AddDbContext<FunMcpDbContext>(options =>
 {
@@ -16,6 +16,11 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton<McpServerState>();
 builder.Services.AddSingleton<IAIClientFactory, AIClientFactory>();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 builder.Services.AddMemoryCache();
 builder.Services.AddControllers();
