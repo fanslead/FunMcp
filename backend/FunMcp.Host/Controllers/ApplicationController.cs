@@ -3,7 +3,7 @@
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
-public class ApplicationController(FunMcpDbContext dbContext) : ControllerBase
+public class ApplicationController(FunMcpDbContext dbContext, IMemoryCache memoryCache) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetApplications()
@@ -53,6 +53,7 @@ public class ApplicationController(FunMcpDbContext dbContext) : ControllerBase
         existingApplication.Description = application.Description;
         dbContext.Applications.Update(existingApplication);
         await dbContext.SaveChangesAsync();
+        memoryCache.Remove(existingApplication.ApiKey);
         return NoContent();
     }
 
@@ -67,6 +68,24 @@ public class ApplicationController(FunMcpDbContext dbContext) : ControllerBase
         }
         dbContext.Applications.Remove(application);
         await dbContext.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPut]
+    [Route("RefreshApiKey/{id}")]
+    public async Task<IActionResult> RefreshApiKey(string id)
+    {
+        var existingApplication = await dbContext.Applications.FirstOrDefaultAsync(x => x.Id == id);
+        if (existingApplication == null)
+        {
+            return NotFound();
+        }
+        var oldKey = existingApplication.ApiKey;
+        existingApplication.ApiKey = Guid.NewGuid().ToString();
+        dbContext.Applications.Update(existingApplication);
+        await dbContext.SaveChangesAsync();
+        memoryCache.Remove(existingApplication.ApiKey);
+
         return NoContent();
     }
 }

@@ -3,7 +3,7 @@
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
-public class AgentController(FunMcpDbContext dbContext) : ControllerBase
+public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAgents(string applicationId)
@@ -88,7 +88,7 @@ public class AgentController(FunMcpDbContext dbContext) : ControllerBase
             }
             await dbContext.SaveChangesAsync();
         }
-
+        memoryCache.Remove($"{agent.ApplicationId}-{agent.Id}");
         return NoContent();
     }
 
