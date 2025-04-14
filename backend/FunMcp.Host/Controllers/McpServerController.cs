@@ -5,8 +5,6 @@
 [Authorize]
 public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpServerState) : ControllerBase
 {
-    // 生成MCPSERVER的CURD接口
-
     [HttpGet]
     public async Task<IActionResult> GetMcpServers(int pageNumber = 1,int pageSize = 50)
     {
@@ -146,5 +144,17 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         await dbContext.SaveChangesAsync();
         await mcpServerState.RemoveAsync(mcpServer.Id);
         return NoContent();
+    }
+
+    [HttpGet]
+    [Route("tools/{id}")]
+    public IList<McpClientToolDto> GetTools(string id)
+    {
+        if (mcpServerState.McpServerTools.TryGetValue(id, out var tools))
+        {
+            return [.. tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description })];
+        }
+
+        return [];
     }
 }
