@@ -2,7 +2,7 @@
 
 public class FunMcpDbContext : DbContext
 {
-    static JsonSerializerOptions JsonSerializerOptions = new()
+    static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
 
     };

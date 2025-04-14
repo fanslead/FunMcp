@@ -6,33 +6,26 @@ public class McpServerState(ILoggerFactory loggerFactory)
 
     public readonly IDictionary<string, IList<McpClientTool>> McpServerTools = new Dictionary<string, IList<McpClientTool>>();
 
-    public async Task<(IMcpClient, IList<McpClientTool>)> CreateStdioAsync(string id, StdioClientTransport stdioClientTransport, CancellationToken cancellationToken = default)
+    public Task<(IMcpClient, IList<McpClientTool>)> CreateStdioAsync(string id, StdioClientTransport stdioClientTransport, CancellationToken cancellationToken = default)
     {
-        if (McpServers.ContainsKey(id))
-        {
-            return (McpServers[id], McpServerTools[id]);
-        }
-
-        var client = await McpClientFactory.CreateAsync(stdioClientTransport, loggerFactory: loggerFactory, cancellationToken: cancellationToken);
-
-        var tools = await client.ListToolsAsync();
-
-        McpServers[id] = client;
-        McpServerTools[id] = tools;
-
-        return (client, tools);
+        return CreateAsync(id, stdioClientTransport, cancellationToken);
     }
 
-    public async Task<(IMcpClient, IList<McpClientTool>)> CreateSseAsync(string id, SseClientTransport sseClientTransport, CancellationToken cancellationToken = default)
+    public Task<(IMcpClient, IList<McpClientTool>)> CreateSseAsync(string id, SseClientTransport sseClientTransport, CancellationToken cancellationToken = default)
     {
-        if (McpServers.ContainsKey(id))
+        return CreateAsync(id, sseClientTransport,cancellationToken);
+    }
+
+    public async Task<(IMcpClient, IList<McpClientTool>)> CreateAsync(string id, IClientTransport clientTransport, CancellationToken cancellationToken = default)
+    {
+        if (McpServers.TryGetValue(id, out IMcpClient? mcpServer))
         {
-            return (McpServers[id], McpServerTools[id]);
+            return (mcpServer, McpServerTools[id]);
         }
 
-        var client = await McpClientFactory.CreateAsync(sseClientTransport, loggerFactory: loggerFactory, cancellationToken: cancellationToken);
+        var client = await McpClientFactory.CreateAsync(clientTransport, loggerFactory: loggerFactory, cancellationToken: cancellationToken);
 
-        var tools = await client.ListToolsAsync();
+        var tools = await client.ListToolsAsync(cancellationToken: cancellationToken);
 
         McpServers[id] = client;
         McpServerTools[id] = tools;

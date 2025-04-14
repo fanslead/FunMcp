@@ -5,7 +5,7 @@
 public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerState, IMemoryCache memoryCache, IAIClientFactory aiClientFactory) : ControllerBase
 {
     [HttpPost]
-    public async Task<IAsyncEnumerable<ChatResponseUpdate>> ChatAsync([FromBody] ChatRequestDto chatRequest)
+    public async Task<IAsyncEnumerable<ChatResponseUpdate>> ChatAsync([FromBody] ChatRequestDto chatRequest, CancellationToken cancellationToken = default)
     {
         var application = await CheckApiKey();
 
@@ -45,7 +45,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
             Tools = [.. tools ?? []]
         };
 
-        return chatClient.GetStreamingResponseAsync(chatMessages, chatOptions);
+        return chatClient.GetStreamingResponseAsync(chatMessages, chatOptions, cancellationToken);
     }
 
     [HttpGet]

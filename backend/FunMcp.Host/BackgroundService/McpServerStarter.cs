@@ -7,7 +7,7 @@ public class McpServerStarter(IServiceProvider serviceProvider, McpServerState m
         logger.LogInformation("Starting McpServerStarter...");
         using var scope = serviceProvider.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<FunMcpDbContext>();
-        var mcpServerInfos = await dbContext.McpServers.Where(x => x.Enable).ToListAsync();
+        var mcpServerInfos = await dbContext.McpServers.Where(x => x.Enable).ToListAsync(cancellationToken: cancellationToken);
 
         foreach (var mcpServerInfo in mcpServerInfos)
         {

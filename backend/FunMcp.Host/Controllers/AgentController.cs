@@ -44,7 +44,7 @@ public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache
         {
             foreach (var mcpServerId in dto.McpServers)
             {
-                dto.McpServerTools.TryGetValue(mcpServerId, out var tools);
+                dto.McpServerTools!.TryGetValue(mcpServerId, out var tools);
                 var agentMcpServer = new AgentMcpServer
                 {
                     AgentId = agent.Id,
@@ -81,7 +81,7 @@ public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache
             dbContext.AgentMcpServers.RemoveRange(existingAgentMcpServers);
             foreach (var mcpServerId in dto.McpServers)
             {
-                dto.McpServerTools.TryGetValue(mcpServerId, out var tools);
+                dto.McpServerTools!.TryGetValue(mcpServerId, out var tools);
                 var agentMcpServer = new AgentMcpServer
                 {
                     AgentId = agent.Id,
