@@ -16,13 +16,16 @@ public class McpServer
     [StringLength(16)]
     public string? Command { get; set; }
 
+    [StringLength(2048)]
     public List<string>? Arguments { get; set; } = [];
 
+    [StringLength(4128)]
     public Dictionary<string, string>? EnvironmentVariables { get; set; } = [];
 
     [StringLength(256)]
     public string? Endpoint { get;  set; }
 
+    [StringLength(4128)]
     public Dictionary<string, string>? AdditionalHeaders { get; set; } = [];
 
     public int? MaxReconnectAttempts { get;  set; }

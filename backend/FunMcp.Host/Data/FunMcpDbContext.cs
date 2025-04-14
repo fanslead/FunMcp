@@ -47,6 +47,13 @@ public class FunMcpDbContext : DbContext
         modelBuilder.Entity<AgentMcpServer>()
             .HasKey(x => new { x.AgentId, x.McpServerId });
 
+        modelBuilder.Entity<AgentMcpServer>()
+            .Property(e=>e.McpServerTools)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonSerializerOptions),
+                v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions) ?? new List<string>()
+            );
+
         modelBuilder.Entity<Application>()
             .HasIndex(x => x.ApiKey);
     }

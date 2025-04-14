@@ -10,5 +10,8 @@ public class AgentMcpServer
     [StringLength(64)]
     public required string McpServerId { get; set; }
 
-    public virtual McpServer? McpServer { get; set; }   
+    public virtual McpServer? McpServer { get; set; }
+
+    [StringLength(2048)]
+    public List<string> McpServerTools { get; set; } = [];
 }

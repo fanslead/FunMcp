@@ -40,14 +40,16 @@ public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache
         await dbContext.Agents.AddAsync(agent);
         await dbContext.SaveChangesAsync();
 
-        if(dto.McpServers != null)
+        if (dto.McpServers != null)
         {
             foreach (var mcpServerId in dto.McpServers)
             {
+                dto.McpServerTools.TryGetValue(mcpServerId, out var tools);
                 var agentMcpServer = new AgentMcpServer
                 {
                     AgentId = agent.Id,
-                    McpServerId = mcpServerId
+                    McpServerId = mcpServerId,
+                    McpServerTools = tools ?? []
                 };
                 await dbContext.AgentMcpServers.AddAsync(agentMcpServer);
             }
@@ -73,16 +75,18 @@ public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache
         dbContext.Agents.Update(agent);
         await dbContext.SaveChangesAsync();
 
-        if (dto.McpServers != null) 
+        if (dto.McpServers != null)
         {
             var existingAgentMcpServers = await dbContext.AgentMcpServers.Where(x => x.AgentId == id).ToListAsync();
             dbContext.AgentMcpServers.RemoveRange(existingAgentMcpServers);
             foreach (var mcpServerId in dto.McpServers)
             {
+                dto.McpServerTools.TryGetValue(mcpServerId, out var tools);
                 var agentMcpServer = new AgentMcpServer
                 {
                     AgentId = agent.Id,
-                    McpServerId = mcpServerId
+                    McpServerId = mcpServerId,
+                    McpServerTools = tools ?? []
                 };
                 await dbContext.AgentMcpServers.AddAsync(agentMcpServer);
             }

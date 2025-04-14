@@ -11,9 +11,19 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         var agent = await GetAgentAsync(chatRequest.AgentId, application!.Id);
 
-        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+        var dbMcpServers = await GetMcpServers(agent!.Id);
 
-        var tools = mcpServerIds?.SelectMany(x => mcpServerState.McpServerTools[x]).ToList();
+        var tools = new List<McpClientTool>(); 
+
+        foreach (var dbMcpServer in dbMcpServers)
+        {
+            var mcpTools = mcpServerState.McpServerTools[dbMcpServer.McpServerId].ToList();
+            if(dbMcpServer.McpServerTools.Count > 0)
+            {
+                mcpTools = mcpTools.Where(t => dbMcpServer.McpServerTools.Contains(t.Name)).ToList();
+            }
+            tools.AddRange(mcpTools);
+        }
 
         var chatClient = aiClientFactory.CreateChatClient(agent!.AIServer);
 
@@ -46,7 +56,9 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         var agent = await GetAgentAsync(agentId, application!.Id);
 
-        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+        var dbMcpServers = await GetMcpServers(agent!.Id);
+
+        var mcpServerIds = dbMcpServers.Select(x => x.McpServerId);
 
         var mcpServers = (await dbContext.McpServers.Where(x => mcpServerIds.Contains(x.Id)).ToListAsync())
             .ToDictionary(x => x.Id, x => x);
@@ -71,7 +83,10 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         var agent = await GetAgentAsync(agentId, application!.Id);
 
-        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+        var dbMcpServers = await GetMcpServers(agent!.Id);
+
+        var mcpServerIds = dbMcpServers.Select(x => x.McpServerId);
+
         if (mcpServerIds.Contains(mcpId))
         {
             if (mcpServerState.McpServerTools.TryGetValue(mcpId, out var tools))
@@ -92,35 +107,36 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         var agent = await GetAgentAsync(agentId, application!.Id);
 
-        var mcpServerIds = await GetMcpServerIds(agent!.Id);
+        var dbMcpServers = await GetMcpServers(agent!.Id);
+
+        var mcpServerIds = dbMcpServers.Select(x => x.McpServerId);
 
         var mcpServers = (await dbContext.McpServers.Where(x => mcpServerIds.Contains(x.Id)).ToListAsync())
             .ToDictionary(x => x.Id, x => x);
 
         var mcpDic = new Dictionary<string, McpServerInfoDto>();
-        foreach (var mcpServerId in mcpServerIds)
+        foreach (var dbMcpServer in dbMcpServers)
         {
-            if (mcpServerState.McpServers.TryGetValue(mcpServerId, out var mcpServer))
+            if (mcpServerState.McpServers.TryGetValue(dbMcpServer.McpServerId, out var mcpServer))
             {
-                mcpDic[mcpServers[mcpServerId].Name] = new McpServerInfoDto { Id = mcpServers[mcpServerId].Id, Name = mcpServer.ServerInfo.Name, Version = mcpServer.ServerInfo.Version };
+                mcpDic[mcpServers[dbMcpServer.McpServerId].Name] = new McpServerInfoDto { Id = mcpServers[dbMcpServer.McpServerId].Id, Name = mcpServer.ServerInfo.Name, Version = mcpServer.ServerInfo.Version };
             }
         }
 
         return mcpDic;
     }
 
-    private async Task<List<string>> GetMcpServerIds(string agentId)
+    private async Task<List<AgentMcpServer>> GetMcpServers(string agentId)
     {
-        var mcpServerIds = await memoryCache.GetOrCreateAsync(agentId, async entry =>
+        var mcpServers = await memoryCache.GetOrCreateAsync(agentId, async entry =>
         {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
             var agentMcpServers = await dbContext.AgentMcpServers
                 .Where(x => x.AgentId == agentId)
-                .Select(x => x.McpServerId)
                 .ToListAsync();
             return agentMcpServers;
         });
-        return mcpServerIds ?? [];
+        return mcpServers ?? [];
     }
 
     private async Task<Agent?> GetAgentAsync(string agentId, string applicationId)

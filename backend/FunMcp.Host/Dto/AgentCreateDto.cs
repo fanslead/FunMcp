@@ -27,4 +27,6 @@ public class AgentCreateDto
     public float? TopP { get; set; }
 
     public List<string>? McpServers { get; set; }
+
+    public Dictionary<string, List<string>>? McpServerTools { get; set; } = [];
 }
