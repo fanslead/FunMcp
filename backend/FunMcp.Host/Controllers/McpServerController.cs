@@ -6,9 +6,16 @@
 public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpServerState) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetMcpServers(int pageNumber = 1,int pageSize = 50)
+    public async Task<IActionResult> GetMcpServers(string? filter, int pageNumber = 1,int pageSize = 50)
     {
-        var mcpServers = await dbContext.McpServers
+        var query = dbContext.McpServers.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            query = query.Where(x => x.Name.Contains(filter) || x.Description.Contains(filter));
+        }
+
+        var mcpServers = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

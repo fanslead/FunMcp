@@ -6,9 +6,16 @@
 public class ApplicationController(FunMcpDbContext dbContext, IMemoryCache memoryCache) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetApplications()
+    public async Task<IActionResult> GetApplications(string? filter)
     {
-        var applications = await dbContext.Applications.ToListAsync();
+        var query = dbContext.Applications.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            query = query.Where(x => x.Name.Contains(filter) || x.Description.Contains(filter));
+        }
+
+        var applications = await query.ToListAsync();
         return Ok(applications);
     }
 
