@@ -20,10 +20,6 @@ public class McpServerUpdateDto
 
     public Dictionary<string, string>? AdditionalHeaders { get; set; } = [];
 
-    public int? MaxReconnectAttempts { get; set; }
-
-    public int? ReconnectDelay { get; set; }
-
     public int? ConnectionTimeout { get; set; }
 
     [StringLength(256)]

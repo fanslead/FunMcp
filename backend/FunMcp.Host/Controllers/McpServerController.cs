@@ -47,8 +47,6 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
             EnvironmentVariables = dto.EnvironmentVariables,
             Endpoint = dto.Endpoint,
             AdditionalHeaders = dto.AdditionalHeaders,
-            MaxReconnectAttempts = dto.MaxReconnectAttempts,
-            ReconnectDelay = dto.ReconnectDelay,
             ConnectionTimeout = dto.ConnectionTimeout
         };
         await dbContext.McpServers.AddAsync(mcpServer);
@@ -73,8 +71,6 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         mcpServer.EnvironmentVariables = dto.EnvironmentVariables;
         mcpServer.Endpoint = dto.Endpoint;
         mcpServer.AdditionalHeaders = dto.AdditionalHeaders;
-        mcpServer.MaxReconnectAttempts = dto.MaxReconnectAttempts;
-        mcpServer.ReconnectDelay = dto.ReconnectDelay;
         mcpServer.ConnectionTimeout = dto.ConnectionTimeout;
         dbContext.McpServers.Update(mcpServer);
         await dbContext.SaveChangesAsync();
@@ -113,8 +109,6 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
                 Name = mcpServer.Name,
                 Endpoint = new Uri(mcpServer.Endpoint!),
                 AdditionalHeaders = mcpServer.AdditionalHeaders,
-                MaxReconnectAttempts = mcpServer.MaxReconnectAttempts ?? 3,
-                ReconnectDelay = mcpServer.ReconnectDelay.HasValue ? TimeSpan.FromSeconds(mcpServer.ReconnectDelay.Value) : TimeSpan.FromSeconds(5),
                 ConnectionTimeout = mcpServer.ConnectionTimeout.HasValue ? TimeSpan.FromSeconds(mcpServer.ConnectionTimeout.Value) : TimeSpan.FromSeconds(30),
             }));
         }

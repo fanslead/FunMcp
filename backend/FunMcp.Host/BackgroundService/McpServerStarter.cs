@@ -33,8 +33,6 @@ public class McpServerStarter(IServiceProvider serviceProvider, McpServerState m
                         Name = mcpServerInfo.Name,
                         Endpoint = new Uri(mcpServerInfo.Endpoint!),
                         AdditionalHeaders = mcpServerInfo.AdditionalHeaders,
-                        MaxReconnectAttempts = mcpServerInfo.MaxReconnectAttempts ?? 3,
-                        ReconnectDelay = mcpServerInfo.ReconnectDelay.HasValue ? TimeSpan.FromSeconds(mcpServerInfo.ReconnectDelay.Value) : TimeSpan.FromSeconds(5),
                         ConnectionTimeout = mcpServerInfo.ConnectionTimeout.HasValue ? TimeSpan.FromSeconds(mcpServerInfo.ConnectionTimeout.Value) : TimeSpan.FromSeconds(30),
                     }), cancellationToken: cancellationToken);
 
