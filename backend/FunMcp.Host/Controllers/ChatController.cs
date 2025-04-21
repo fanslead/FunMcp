@@ -68,6 +68,13 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         {
             if (mcpServerState.McpServerTools.TryGetValue(mcpServerId, out var tools))
             {
+                var dbMcpServer = dbMcpServers.First(x => x.McpServerId == mcpServerId);
+
+                if (dbMcpServer.McpServerTools.Count > 0)
+                {
+                    tools = tools.Where(t => dbMcpServer.McpServerTools.Contains(t.Name)).ToList();
+                }
+
                 toolsDic[mcpServers[mcpServerId].Name] = tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description }).ToList();
             }
         }
@@ -91,6 +98,13 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         {
             if (mcpServerState.McpServerTools.TryGetValue(mcpId, out var tools))
             {
+                var dbMcpServer = dbMcpServers.First(x => x.McpServerId == mcpId);
+
+                if (dbMcpServer.McpServerTools.Count > 0)
+                {
+                    tools = tools.Where(t => dbMcpServer.McpServerTools.Contains(t.Name)).ToList();
+                }
+
                 return [.. tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description })];
             }
 
