@@ -22,6 +22,8 @@ global using OpenAI;
 global using Scalar.AspNetCore;
 global using System.ClientModel;
 global using System.ComponentModel.DataAnnotations;
+global using System.Net.Mime;
 global using System.Security.Claims;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
+global using Microsoft.AspNetCore.Http.HttpResults;

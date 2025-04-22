@@ -6,7 +6,8 @@
 public class ApplicationController(FunMcpDbContext dbContext, IMemoryCache memoryCache) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetApplications(string? filter)
+    [ProducesResponseType<List<Application>>(StatusCodes.Status200OK)]
+    public async Task<Ok<List<Application>>> GetApplications(string? filter)
     {
         var query = dbContext.Applications.AsNoTracking();
 
@@ -16,23 +17,27 @@ public class ApplicationController(FunMcpDbContext dbContext, IMemoryCache memor
         }
 
         var applications = await query.ToListAsync();
-        return Ok(applications);
+        return TypedResults.Ok(applications);
     }
 
     [HttpGet]
     [Route("{id}")]
-    public async Task<IActionResult> GetApplication(string id)
+    [ProducesResponseType<Ok<Application>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<Ok<Application>, NotFound>> GetApplication(string id)
     {
         var application = await dbContext.Applications.FirstOrDefaultAsync(x => x.Id == id);
         if (application == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
-        return Ok(application);
+        return TypedResults.Ok(application);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateApplication([FromBody] ApplicationCreateDto dto)
+    [ProducesResponseType<Created<Application>>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<Results<Created<Application>, BadRequest>> CreateApplication([FromBody] ApplicationCreateDto dto)
     {
         var application = new Application
         {
@@ -44,48 +49,55 @@ public class ApplicationController(FunMcpDbContext dbContext, IMemoryCache memor
 
         await dbContext.Applications.AddAsync(application);
         await dbContext.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
+        var location = Url.Action(nameof(CreateApplication), new { id = application.Id }) ?? $"/{application.Id}";
+        return TypedResults.Created(location, application);
     }
 
     [HttpPut]
     [Route("{id}")]
-    public async Task<IActionResult> UpdateApplication(string id, [FromBody] ApplicationUpdateDto application)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> UpdateApplication(string id, [FromBody] ApplicationUpdateDto application)
     {
         var existingApplication = await dbContext.Applications.FirstOrDefaultAsync(x => x.Id == id);
         if (existingApplication == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         existingApplication.Name = application.Name;
         existingApplication.Description = application.Description;
         dbContext.Applications.Update(existingApplication);
         await dbContext.SaveChangesAsync();
         memoryCache.Remove(existingApplication.ApiKey);
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpDelete]
     [Route("{id}")]
-    public async Task<IActionResult> DeleteApplication(string id)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> DeleteApplication(string id)
     {
         var application = await dbContext.Applications.FirstOrDefaultAsync(x => x.Id == id);
         if (application == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         dbContext.Applications.Remove(application);
         await dbContext.SaveChangesAsync();
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpPut]
     [Route("RefreshApiKey/{id}")]
-    public async Task<IActionResult> RefreshApiKey(string id)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> RefreshApiKey(string id)
     {
         var existingApplication = await dbContext.Applications.FirstOrDefaultAsync(x => x.Id == id);
         if (existingApplication == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         var oldKey = existingApplication.ApiKey;
         existingApplication.ApiKey = Guid.NewGuid().ToString();
@@ -93,6 +105,6 @@ public class ApplicationController(FunMcpDbContext dbContext, IMemoryCache memor
         await dbContext.SaveChangesAsync();
         memoryCache.Remove(existingApplication.ApiKey);
 
-        return NoContent();
+        return TypedResults.NoContent();
     }
 }
