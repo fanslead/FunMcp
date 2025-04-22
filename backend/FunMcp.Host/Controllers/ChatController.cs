@@ -157,7 +157,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
     {
         var agent = await memoryCache.GetOrCreateAsync($"{applicationId}-{agentId}", async entry =>
         {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             var agent = await dbContext.Agents.FirstOrDefaultAsync(x => x.Id == agentId && x.ApplicationId == applicationId);
             
             return agent;
@@ -172,7 +172,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         var application = await memoryCache.GetOrCreateAsync(apiKey, async entry =>
         {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             var application = await dbContext.Applications.FirstOrDefaultAsync(x => x.ApiKey == apiKey);
             
             return application;
