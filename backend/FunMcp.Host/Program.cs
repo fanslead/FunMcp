@@ -8,7 +8,7 @@ builder.Services.Configure<AIOptions>(builder.Configuration.GetSection("AIConfig
 
 builder.Services.AddDbContext<FunMcpDbContext>(options =>
 {
-    options.UseInMemoryDatabase("FunMcpDb");
+    options.UseSqlite("Data Source=fun-mcp.db");
 });
 
 builder.Services.AddExceptionHandler<ExceptionHandler>();
