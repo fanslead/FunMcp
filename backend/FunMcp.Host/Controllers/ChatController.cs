@@ -159,14 +159,11 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
             var agent = await dbContext.Agents.FirstOrDefaultAsync(x => x.Id == agentId && x.ApplicationId == applicationId);
-            if (agent == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
+            
             return agent;
         });
 
-        return agent;
+        return agent ?? throw new UnauthorizedAccessException();
     }
 
     private async Task<Application?> CheckApiKey()
@@ -177,13 +174,10 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
             var application = await dbContext.Applications.FirstOrDefaultAsync(x => x.ApiKey == apiKey);
-            if (application == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
+            
             return application;
         });
 
-        return application;
+        return application ?? throw new UnauthorizedAccessException();
     }
 }
