@@ -144,7 +144,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
     {
         var mcpServers = await memoryCache.GetOrCreateAsync(agentId, async entry =>
         {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             var agentMcpServers = await dbContext.AgentMcpServers
                 .Where(x => x.AgentId == agentId)
                 .ToListAsync();
