@@ -6,7 +6,8 @@
 public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpServerState) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetMcpServers(string? filter, int pageNumber = 1,int pageSize = 50)
+    [ProducesResponseType<List<McpServer>>(StatusCodes.Status200OK)]
+    public async Task<Ok<List<McpServer>>> GetMcpServers(string? filter, int pageNumber = 1,int pageSize = 50)
     {
         var query = dbContext.McpServers.AsNoTracking();
 
@@ -19,22 +20,27 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-        return Ok(mcpServers);
+        return TypedResults.Ok(mcpServers);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMcpServer(string id)
+    [Route("{id}")]
+    [ProducesResponseType<Ok<McpServer>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<Ok<McpServer>, NotFound>> GetMcpServer(string id)
     {
         var mcpServer = await dbContext.McpServers.FirstOrDefaultAsync(x => x.Id == id);
         if (mcpServer == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
-        return Ok(mcpServer);
+        return TypedResults.Ok(mcpServer);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateMcpServer([FromBody] McpServerCreateDto dto)
+    [ProducesResponseType<Created<McpServer>>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<Results<Created<McpServer>, BadRequest>> CreateMcpServer([FromBody] McpServerCreateDto dto)
     {
         var mcpServer = new McpServer
         {
@@ -51,17 +57,20 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         };
         await dbContext.McpServers.AddAsync(mcpServer);
         await dbContext.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetMcpServer), new { id = mcpServer.Id }, mcpServer);
+        var location = Url.Action(nameof(CreateMcpServer), new { id = mcpServer.Id }) ?? $"/{mcpServer.Id}";
+        return TypedResults.Created(location, mcpServer);
     }
 
     [HttpPut]
     [Route("{id}")]
-    public async Task<IActionResult> UpdateMcpServer(string id, [FromBody] McpServerUpdateDto dto)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> UpdateMcpServer(string id, [FromBody] McpServerUpdateDto dto)
     {
         var mcpServer = await dbContext.McpServers.FirstOrDefaultAsync(x => x.Id == id);
         if (mcpServer == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         mcpServer.Name = dto.Name;
         mcpServer.Description = dto.Description;
@@ -74,17 +83,19 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         mcpServer.ConnectionTimeout = dto.ConnectionTimeout;
         dbContext.McpServers.Update(mcpServer);
         await dbContext.SaveChangesAsync();
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpPut]
     [Route("Enable/{id}")]
-    public async Task<IActionResult> EnableMcpServer(string id)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> EnableMcpServer(string id)
     {
         var mcpServer = await dbContext.McpServers.FirstOrDefaultAsync(x => x.Id == id);
         if (mcpServer == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         mcpServer.Enable = true;
         dbContext.McpServers.Update(mcpServer);
@@ -113,38 +124,42 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
             }));
         }
 
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpPut]
     [Route("Disable/{id}")]
-    public async Task<IActionResult> DisableMcpServer(string id)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> DisableMcpServer(string id)
     {
         var mcpServer = await dbContext.McpServers.FirstOrDefaultAsync(x => x.Id == id);
         if (mcpServer == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         mcpServer.Enable = false;
         dbContext.McpServers.Update(mcpServer);
         await dbContext.SaveChangesAsync();
         await mcpServerState.RemoveAsync(mcpServer.Id);
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpDelete]
     [Route("{id}")]
-    public async Task<IActionResult> DeleteMcpServer(string id)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> DeleteMcpServer(string id)
     {
         var mcpServer = await dbContext.McpServers.FirstOrDefaultAsync(x => x.Id == id);
         if (mcpServer == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         dbContext.McpServers.Remove(mcpServer);
         await dbContext.SaveChangesAsync();
         await mcpServerState.RemoveAsync(mcpServer.Id);
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpGet]

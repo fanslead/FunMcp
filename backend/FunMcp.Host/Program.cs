@@ -39,6 +39,8 @@ builder.Services.AddAuthentication(option => {
 
 builder.Services.AddHostedService<McpServerStarter>();
 
+builder.Services.AddCors();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -48,6 +50,13 @@ if (app.Environment.IsDevelopment())
         .CacheOutput();
     app.MapScalarApiReference("/doc");
 }
+
+app.UseCors(app =>
+{
+    app.AllowAnyOrigin()
+       .AllowAnyMethod()
+       .AllowAnyHeader();
+});
 
 app.UseExceptionHandler();
 

@@ -68,6 +68,13 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         {
             if (mcpServerState.McpServerTools.TryGetValue(mcpServerId, out var tools))
             {
+                var dbMcpServer = dbMcpServers.First(x => x.McpServerId == mcpServerId);
+
+                if (dbMcpServer.McpServerTools.Count > 0)
+                {
+                    tools = tools.Where(t => dbMcpServer.McpServerTools.Contains(t.Name)).ToList();
+                }
+
                 toolsDic[mcpServers[mcpServerId].Name] = tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description }).ToList();
             }
         }
@@ -91,6 +98,13 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         {
             if (mcpServerState.McpServerTools.TryGetValue(mcpId, out var tools))
             {
+                var dbMcpServer = dbMcpServers.First(x => x.McpServerId == mcpId);
+
+                if (dbMcpServer.McpServerTools.Count > 0)
+                {
+                    tools = tools.Where(t => dbMcpServer.McpServerTools.Contains(t.Name)).ToList();
+                }
+
                 return [.. tools.Select(x => new McpClientToolDto { Name = x.Name, Description = x.Description })];
             }
 
@@ -130,7 +144,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
     {
         var mcpServers = await memoryCache.GetOrCreateAsync(agentId, async entry =>
         {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             var agentMcpServers = await dbContext.AgentMcpServers
                 .Where(x => x.AgentId == agentId)
                 .ToListAsync();
@@ -143,16 +157,13 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
     {
         var agent = await memoryCache.GetOrCreateAsync($"{applicationId}-{agentId}", async entry =>
         {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             var agent = await dbContext.Agents.FirstOrDefaultAsync(x => x.Id == agentId && x.ApplicationId == applicationId);
-            if (agent == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
+            
             return agent;
         });
 
-        return agent;
+        return agent ?? throw new UnauthorizedAccessException();
     }
 
     private async Task<Application?> CheckApiKey()
@@ -161,15 +172,12 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         var application = await memoryCache.GetOrCreateAsync(apiKey, async entry =>
         {
-            entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             var application = await dbContext.Applications.FirstOrDefaultAsync(x => x.ApiKey == apiKey);
-            if (application == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
+            
             return application;
         });
 
-        return application;
+        return application ?? throw new UnauthorizedAccessException();
     }
 }

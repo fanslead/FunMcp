@@ -6,26 +6,31 @@
 public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAgents(string applicationId)
+    [ProducesResponseType<List<Agent>>(StatusCodes.Status200OK)]
+    public async Task<Ok<List<Agent>>> GetAgents(string applicationId)
     {
         var agents = await dbContext.Agents.Where(x => x.ApplicationId == applicationId).ToListAsync();
-        return Ok(agents);
+        return TypedResults.Ok(agents);
     }
 
     [HttpGet]
     [Route("{id}")]
-    public async Task<IActionResult> GetAgent(string id)
+    [ProducesResponseType<Agent>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<Ok<Agent>, NotFound>> GetAgent(string id)
     {
         var agent = await dbContext.Agents.Include(x => x.ApplicationMcpServers!).ThenInclude(x => x.McpServer).FirstOrDefaultAsync(x => x.Id == id);
         if (agent == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
-        return Ok(agent);
+        return TypedResults.Ok(agent);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateAgent([FromBody] AgentCreateDto dto)
+    [ProducesResponseType<Created<Agent>>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<Results<Created<Agent>, BadRequest>> CreateAgent([FromBody] AgentCreateDto dto)
     {
         var agent = new Agent
         {
@@ -56,17 +61,21 @@ public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache
             await dbContext.SaveChangesAsync();
         }
 
-        return CreatedAtAction(nameof(GetAgent), new { id = agent.Id }, agent);
+        var location = Url.Action(nameof(CreateAgent), new { id = agent.Id }) ?? $"/{agent.Id}";
+
+        return TypedResults.Created(location, agent);
     }
 
     [HttpPut]
     [Route("{id}")]
-    public async Task<IActionResult> UpdateAgent(string id, [FromBody] AgentUpdateDto dto)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> UpdateAgent(string id, [FromBody] AgentUpdateDto dto)
     {
         var agent = await dbContext.Agents.FirstOrDefaultAsync(x => x.Id == id);
         if (agent == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         agent.Name = dto.Name;
         agent.Description = dto.Description;
@@ -93,20 +102,22 @@ public class AgentController(FunMcpDbContext dbContext, IMemoryCache memoryCache
             await dbContext.SaveChangesAsync();
         }
         memoryCache.Remove($"{agent.ApplicationId}-{agent.Id}");
-        return NoContent();
+        return TypedResults.NoContent();
     }
 
     [HttpDelete]
     [Route("{id}")]
-    public async Task<IActionResult> DeleteAgent(string id)
+    [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<Results<NotFound, NoContent>> DeleteAgent(string id)
     {
         var agent = await dbContext.Agents.FirstOrDefaultAsync(x => x.Id == id);
         if (agent == null)
         {
-            return NotFound();
+            return TypedResults.NotFound();
         }
         dbContext.Agents.Remove(agent);
         await dbContext.SaveChangesAsync();
-        return NoContent();
+        return TypedResults.NoContent();
     }
 }
