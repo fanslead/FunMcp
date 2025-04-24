@@ -57,3 +57,10 @@ mcp
 - Get /api/chat/agent/tools/{agentId}/{mcpId} 根据agent和指定mcp server获取该mcp server的tools
 
 - Get /api/chat/agent/mcp/{agentId} 根据agent获取绑定的MCP Server信息
+
+
+## 推荐几个MCP站点
+
+https://mcp.so/
+
+https://mcpagents.dev/
