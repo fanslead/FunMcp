@@ -61,6 +61,81 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         return TypedResults.Created(location, mcpServer);
     }
 
+    [HttpPost]
+    [Route("import")]
+    [ProducesResponseType<Created<McpServer>>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<Results<Created<McpServer>, BadRequest>> CreateMcpServerFromJson([FromBody] ImportMcpServerDto dto)
+    {
+        var mcpServerDto = JsonSerializer.Deserialize<ImportMcpServerDeserializeDto>(dto.Json);
+
+        if (mcpServerDto == null)
+        {
+            return TypedResults.BadRequest();
+        }
+
+        var mcpServer = new McpServer
+        {
+            Name = dto.Name,
+            Id = Guid.NewGuid().ToString(),
+            TransportType = string.IsNullOrWhiteSpace(mcpServerDto.Command) ? "sse" : "stdio",
+            Command = mcpServerDto.Command,
+            Arguments = mcpServerDto.Arguments,
+            EnvironmentVariables = mcpServerDto.EnvironmentVariables,
+            Endpoint = mcpServerDto.Endpoint,
+            AdditionalHeaders = mcpServerDto.AdditionalHeaders,
+        };
+
+        await dbContext.McpServers.AddAsync(mcpServer);
+        await dbContext.SaveChangesAsync();
+        var location = Url.Action(nameof(CreateMcpServer), new { id = mcpServer.Id }) ?? $"/{mcpServer.Id}";
+        return TypedResults.Created(location, mcpServer);
+    }
+
+    [HttpPost]
+    [Route("Batch-Import")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<Results<Ok, BadRequest>> BatchCreateMcpServerFromJson([FromBody] BatchImportMcpServerDto dto)
+    {
+        var mcpServersJsonElement = JsonSerializer.Deserialize<JsonElement>(dto.Json);
+
+        foreach (var item in mcpServersJsonElement.EnumerateObject())
+        {
+            if(item.Name.Equals("mcpServers", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var mcpServerData in item.Value.EnumerateObject())
+                {
+                    var json = mcpServerData.Value.GetRawText();
+                    var mcpServerDto = JsonSerializer.Deserialize<ImportMcpServerDeserializeDto>(json);
+
+                    if (mcpServerDto == null)
+                    {
+                        return TypedResults.BadRequest();
+                    }
+
+                    var mcpServer = new McpServer
+                    {
+                        Name = mcpServerData.Name,
+                        Id = Guid.NewGuid().ToString(),
+                        TransportType = string.IsNullOrWhiteSpace(mcpServerDto.Command) ? "sse" : "stdio",
+                        Command = mcpServerDto.Command,
+                        Arguments = mcpServerDto.Arguments,
+                        EnvironmentVariables = mcpServerDto.EnvironmentVariables,
+                        Endpoint = mcpServerDto.Endpoint,
+                        AdditionalHeaders = mcpServerDto.AdditionalHeaders,
+                    };
+
+                    await dbContext.McpServers.AddAsync(mcpServer);
+                }
+            }
+        }
+
+        await dbContext.SaveChangesAsync();
+
+        return TypedResults.Ok();
+    }
+
     [HttpPut]
     [Route("{id}")]
     [ProducesResponseType<NoContent>(StatusCodes.Status204NoContent)]
