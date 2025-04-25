@@ -24,4 +24,7 @@ public class McpServerUpdateDto
 
     [StringLength(256)]
     public string? Description { get; set; }
+
+    [StringLength(50)]
+    public string? Tag { get; set; }
 }

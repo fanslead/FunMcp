@@ -27,5 +27,9 @@ public class McpServerCreateDto
 
     public int? ConnectionTimeout { get; set; }
 
+    [StringLength(256)]
     public string? Description { get; set; }
+
+    [StringLength(50)]
+    public string? Tag { get; set; }
 }

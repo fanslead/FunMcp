@@ -13,10 +13,11 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
 
         if (!string.IsNullOrWhiteSpace(filter))
         {
-            query = query.Where(x => x.Name.Contains(filter) || x.Description.Contains(filter));
+            query = query.Where(x => x.Name.Contains(filter) || x.Description.Contains(filter) || x.Tag.Contains(filter));
         }
 
         var mcpServers = await query
+            .OrderBy(x=>x.Tag)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -247,5 +248,14 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         }
 
         return [];
+    }
+
+    [HttpGet]
+    [Route("tags")]
+    public async Task<IList<string?>> GetMcpExistTag()
+    {
+        var tags = await dbContext.McpServers.Select(x => x.Tag).Distinct().ToListAsync();
+
+        return tags;
     }
 }
