@@ -1,6 +1,8 @@
 # FunMcp
 
-mcp
+这是一个极简的集成AI的服务，用户可以配置自己的MCP Server池，通过Agent去关联MCP Server，所有MCP Server可以在各个Agent中共用。 
+
+配置完成后，可通过Chat API在自己的业务服务中直接调用Agent。
 
 ## 后端服务说明
 
@@ -38,7 +40,14 @@ mcp
 }
 ```
 
+## Manage API使用说明
+
+- 先配置appsettings.json中的AccessToken。
+
+- Manage API请求需要在Http Request Headers中添加 Authorization： Bearer {AccessToken}
+
 ## Chat API使用说明
+
 
 ### 使用前提
 
@@ -47,6 +56,8 @@ mcp
 2. 创建Agent，绑定MCP Server
 
 3. Http Request Headers添加 api-key header.
+
+> Chat API 只需要api-key header，不需要Authorization header
 
 ### API
 
@@ -58,6 +69,15 @@ mcp
 
 - Get /api/chat/agent/mcp/{agentId} 根据agent获取绑定的MCP Server信息
 
+## Road Map
+
+- ✅ Application Manage
+- ✅ Agent Manage
+- ✅ MCP Server Manage
+- ✅ Chat API
+- ❌ WEB UI
+- ❌ A2A
+- ❌ Application/Agent Usage Statistics
 
 ## 推荐几个MCP站点
 
