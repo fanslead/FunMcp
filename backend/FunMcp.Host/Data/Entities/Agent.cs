@@ -17,7 +17,7 @@ public class Agent
     [StringLength(256)]
     public string? Description { get; set; }
 
-    [StringLength(4128)]
+    [StringLength(20480)]
     public required string SystemPrompt { get; set; }
 
     [StringLength(64)]
