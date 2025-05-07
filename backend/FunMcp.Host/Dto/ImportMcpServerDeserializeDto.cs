@@ -18,4 +18,7 @@ public class ImportMcpServerDeserializeDto
 
     [JsonPropertyName("headers")]
     public Dictionary<string, string>? AdditionalHeaders { get; set; } = [];
+
+    [JsonPropertyName("streamable")]
+    public bool UseStreamableHttp { get; set; }
 }

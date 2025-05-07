@@ -32,4 +32,6 @@ public class McpServerCreateDto
 
     [StringLength(50)]
     public string? Tag { get; set; }
+
+    public bool? UseStreamableHttp { get; set; }
 }

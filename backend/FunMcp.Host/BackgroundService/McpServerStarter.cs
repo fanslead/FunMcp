@@ -31,6 +31,7 @@ public class McpServerStarter(IServiceProvider serviceProvider, McpServerState m
                     var (client, tools) = await mcpServerState.CreateSseAsync(mcpServerInfo.Id, new SseClientTransport(new SseClientTransportOptions
                     {
                         Name = mcpServerInfo.Name,
+                        UseStreamableHttp = mcpServerInfo.UseStreamableHttp,
                         Endpoint = new Uri(mcpServerInfo.Endpoint!),
                         AdditionalHeaders = mcpServerInfo.AdditionalHeaders,
                         ConnectionTimeout = mcpServerInfo.ConnectionTimeout.HasValue ? TimeSpan.FromSeconds(mcpServerInfo.ConnectionTimeout.Value) : TimeSpan.FromSeconds(30),

@@ -54,7 +54,8 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
             EnvironmentVariables = dto.EnvironmentVariables,
             Endpoint = dto.Endpoint,
             AdditionalHeaders = dto.AdditionalHeaders,
-            ConnectionTimeout = dto.ConnectionTimeout
+            ConnectionTimeout = dto.ConnectionTimeout,
+            UseStreamableHttp = dto.UseStreamableHttp ?? false,
         };
         await dbContext.McpServers.AddAsync(mcpServer);
         await dbContext.SaveChangesAsync();
@@ -157,6 +158,7 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
         mcpServer.Endpoint = dto.Endpoint;
         mcpServer.AdditionalHeaders = dto.AdditionalHeaders;
         mcpServer.ConnectionTimeout = dto.ConnectionTimeout;
+        mcpServer.UseStreamableHttp = dto.UseStreamableHttp ?? false;
         dbContext.McpServers.Update(mcpServer);
         await dbContext.SaveChangesAsync();
         return TypedResults.NoContent();
@@ -194,6 +196,7 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
             await mcpServerState.CreateSseAsync(id, new SseClientTransport(new SseClientTransportOptions
             {
                 Name = mcpServer.Name,
+                UseStreamableHttp = mcpServer.UseStreamableHttp,
                 Endpoint = new Uri(mcpServer.Endpoint!),
                 AdditionalHeaders = mcpServer.AdditionalHeaders,
                 ConnectionTimeout = mcpServer.ConnectionTimeout.HasValue ? TimeSpan.FromSeconds(mcpServer.ConnectionTimeout.Value) : TimeSpan.FromSeconds(30),

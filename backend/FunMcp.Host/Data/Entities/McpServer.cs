@@ -30,6 +30,8 @@ public class McpServer
 
     public int? ConnectionTimeout { get;  set; }
 
+    public bool UseStreamableHttp { get; set; }
+
     public bool Enable { get; set; }
 
     [StringLength(256)]

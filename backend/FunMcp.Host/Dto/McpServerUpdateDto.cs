@@ -27,4 +27,6 @@ public class McpServerUpdateDto
 
     [StringLength(50)]
     public string? Tag { get; set; }
+
+    public bool? UseStreamableHttp { get; set; }
 }
