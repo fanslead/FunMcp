@@ -19,7 +19,12 @@ public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory 
             {
                 var azureClient = new AzureOpenAIClient(new Uri(clientConfig.Endpoint!), new ApiKeyCredential(clientConfig.ApiKey!));
                
-                var chatClient = azureClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder().UseFunctionInvocation(loggerFactory: loggerFactory).Build();
+                var chatClient = azureClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder()
+                    .UseOpenTelemetry()
+                    .UseDistributedCache()
+                    .UseLogging()
+                    .UseFunctionInvocation()
+                    .Build();
                 ChatClientCache.TryAdd(aiName, chatClient);
                 return chatClient;
             }
@@ -30,7 +35,25 @@ public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory 
                 {
                     Endpoint = new Uri(clientConfig.Endpoint!),
                 });
-                var chatClient = openAIClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder().UseFunctionInvocation().Build();
+                var chatClient = openAIClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder()
+                    .UseOpenTelemetry()
+                    .UseDistributedCache()
+                    .UseLogging()
+                    .UseFunctionInvocation()
+                    .Build();
+                ChatClientCache.TryAdd(aiName, chatClient);
+                return chatClient;
+            }
+
+            if(type.Equals("Ollama", StringComparison.OrdinalIgnoreCase))
+            {
+                var ollamaClient = new OllamaChatClient(clientConfig.Endpoint!, clientConfig.DefaultModelId);
+                var chatClient = ollamaClient.AsBuilder()
+                    .UseOpenTelemetry()
+                    .UseDistributedCache()
+                    .UseLogging()
+                    .UseFunctionInvocation()
+                    .Build();
                 ChatClientCache.TryAdd(aiName, chatClient);
                 return chatClient;
             }
