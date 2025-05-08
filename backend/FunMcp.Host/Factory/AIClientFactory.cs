@@ -1,6 +1,6 @@
 ﻿namespace FunMcp.Host.Factory;
 
-public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory loggerFactory) : IAIClientFactory
+public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory loggerFactory, IDistributedCache distributedCache) : IAIClientFactory
 {
     private readonly Dictionary<string, IChatClient> ChatClientCache = [];
     public IChatClient CreateChatClient(string? name = null)
@@ -20,10 +20,10 @@ public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory 
                 var azureClient = new AzureOpenAIClient(new Uri(clientConfig.Endpoint!), new ApiKeyCredential(clientConfig.ApiKey!));
                
                 var chatClient = azureClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder()
-                    .UseOpenTelemetry()
-                    .UseDistributedCache()
-                    .UseLogging()
-                    .UseFunctionInvocation()
+                    .UseOpenTelemetry(loggerFactory)
+                    .UseDistributedCache(distributedCache)
+                    .UseLogging(loggerFactory)
+                    .UseFunctionInvocation(loggerFactory)
                     .Build();
                 ChatClientCache.TryAdd(aiName, chatClient);
                 return chatClient;
@@ -36,10 +36,10 @@ public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory 
                     Endpoint = new Uri(clientConfig.Endpoint!),
                 });
                 var chatClient = openAIClient.GetChatClient(clientConfig.DefaultModelId).AsIChatClient().AsBuilder()
-                    .UseOpenTelemetry()
-                    .UseDistributedCache()
-                    .UseLogging()
-                    .UseFunctionInvocation()
+                    .UseOpenTelemetry(loggerFactory)
+                    .UseDistributedCache(distributedCache)
+                    .UseLogging(loggerFactory)
+                    .UseFunctionInvocation(loggerFactory)
                     .Build();
                 ChatClientCache.TryAdd(aiName, chatClient);
                 return chatClient;
@@ -49,10 +49,10 @@ public class AIClientFactory(IOptionsMonitor<AIOptions> options, ILoggerFactory 
             {
                 var ollamaClient = new OllamaChatClient(clientConfig.Endpoint!, clientConfig.DefaultModelId);
                 var chatClient = ollamaClient.AsBuilder()
-                    .UseOpenTelemetry()
-                    .UseDistributedCache()
-                    .UseLogging()
-                    .UseFunctionInvocation()
+                    .UseOpenTelemetry(loggerFactory)
+                    .UseDistributedCache(distributedCache)
+                    .UseLogging(loggerFactory)
+                    .UseFunctionInvocation(loggerFactory)
                     .Build();
                 ChatClientCache.TryAdd(aiName, chatClient);
                 return chatClient;
