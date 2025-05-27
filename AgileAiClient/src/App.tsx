@@ -133,32 +133,168 @@ export async function* fetchStream(url: string, requestBody: any, apiKey: string
 
     if (value) {
       buffer += decoder.decode(value, { stream: true }); // 拼接 chunk 到 buffer
-
-      yield fixIncompleteJson(buffer);
+      
+      // 查找完整的 JSON 对象
+      try {
+        // 尝试寻找最后一个合法的 JSON 结构
+        // 假设每个响应块包含 JSON 数组
+        if (buffer.trim().startsWith('[') && buffer.trim().endsWith(']')) {
+          // 如果是完整的数组格式
+          JSON.parse(buffer); // 尝试解析，如果失败会进入 catch
+          yield buffer;
+          buffer = ''; // 清空缓冲区
+        } else {
+          // 尝试找到最后一个完整的 JSON 数组
+          const result = findLastCompleteJsonArray(buffer);
+          if (result) {
+            yield result.completeJson;
+            buffer = result.remainder; // 保存剩余部分到缓冲区
+          }
+        }
+      } catch (error) {
+        console.warn('Stream chunk is not complete JSON yet, buffering...');
+        // 继续累积数据到下一次迭代
+      }
     }
   }
+  
+  // 处理最后可能剩余的数据
+  if (buffer.trim()) {
+    try {
+      const fixedJson = fixIncompleteJson(buffer);
+      yield fixedJson;
+    } catch (err) {
+      console.error('Could not fix final chunk of JSON data:', err);
+    }
+  }
+}
+
+
+/**
+ * 查找最后一个完整的 JSON 数组
+ */
+function findLastCompleteJsonArray(text: string): { completeJson: string, remainder: string } | null {
+  // 寻找可能的数组结束位置
+  let depth = 0;
+  let inString = false;
+  let escapeNext = false;
+  let arrayStart = -1;
+  let arrayEnd = -1;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"' && !escapeNext) {
+      inString = !inString;
+      continue;
+    }
+    
+    if (inString) continue;
+    
+    if (char === '[') {
+      if (depth === 0) {
+        arrayStart = i;
+      }
+      depth++;
+    } else if (char === ']') {
+      depth--;
+      if (depth === 0) {
+        arrayEnd = i;
+      }
+    }
+  }
+  
+  if (arrayStart !== -1 && arrayEnd !== -1 && arrayStart < arrayEnd) {
+    const completeJson = text.substring(arrayStart, arrayEnd + 1);
+    const remainder = text.substring(arrayEnd + 1);
+    
+    try {
+      // 验证提取的JSON是否有效
+      JSON.parse(completeJson);
+      return { completeJson, remainder };
+    } catch (error) {
+      return null;
+    }
+  }
+  
+  return null;
 }
 
 /**
  * 修复不完整的 JSON 数据
  */
 function fixIncompleteJson(jsonString: string): string {
+  // 如果是空字符串，返回空数组
+  if (!jsonString.trim()) {
+    return '[]';
+  }
+  
   try {
     // 尝试直接解析，如果成功则返回原始字符串
     JSON.parse(jsonString);
     return jsonString;
   } catch (error) {
     console.warn('JSON parse error, attempting to fix:', error);
-
-    // 找到最后一个完整的对象的结束位置
-    const lastValidIndex = jsonString.lastIndexOf('}');
-    if (lastValidIndex === -1) {
-      throw new Error('No valid JSON object found in the string');
-    }
-
-    // 截取到最后一个完整的对象，并追加一个闭合的数组括号
-    const fixedJson = jsonString.slice(0, lastValidIndex + 1) + ']';
-    return fixedJson;
+    
+    // 如果看起来是个数组
+    if (jsonString.trim().startsWith('[')) {
+      // 找到最后一个完整的对象
+      let bracketCount = 0;
+      let inString = false;
+      let escapeNext = false;
+      let lastValidPos = -1;
+      
+      for (let i = 0; i < jsonString.length; i++) {
+        const char = jsonString[i];
+        
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+        
+        if (char === '\\' && inString) {
+          escapeNext = true;
+          continue;
+        }
+        
+        if (char === '"' && !escapeNext) {
+          inString = !inString;
+          continue;
+        }
+        
+        if (inString) continue;
+        
+        if (char === '{') {
+          bracketCount++;
+        } else if (char === '}') {
+          bracketCount--;
+          if (bracketCount === 0) {
+            lastValidPos = i;
+          }
+        }
+      }
+      
+      if (lastValidPos !== -1) {
+        // 找到了完整的对象，在它后面添加 "]"
+        return jsonString.substring(0, lastValidPos + 1) + ']';
+      }
+      
+      // 如果没找到完整对象，但是数组已经开始
+      return jsonString + ']';
+    } 
+    
+    // 如果不是数组格式
+    return '[]'; // 返回空数组作为后备
   }
 }
 

@@ -2921,6 +2921,7 @@ export class ChatResponseUpdate implements IChatResponseUpdate {
     responseId?: string | undefined;
     messageId?: string | undefined;
     chatThreadId?: string | undefined;
+    conversationId?: string | undefined;
     createdAt?: Date | undefined;
     finishReason?: NullableOfChatFinishReason | undefined;
     modelId?: string | undefined;
@@ -2953,6 +2954,7 @@ export class ChatResponseUpdate implements IChatResponseUpdate {
             this.responseId = _data["responseId"];
             this.messageId = _data["messageId"];
             this.chatThreadId = _data["chatThreadId"];
+            this.conversationId = _data["conversationId"];
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
             this.finishReason = _data["finishReason"] ? NullableOfChatFinishReason.fromJS(_data["finishReason"]) : <any>undefined;
             this.modelId = _data["modelId"];
@@ -2983,6 +2985,7 @@ export class ChatResponseUpdate implements IChatResponseUpdate {
         data["responseId"] = this.responseId;
         data["messageId"] = this.messageId;
         data["chatThreadId"] = this.chatThreadId;
+        data["conversationId"] = this.conversationId;
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
         data["finishReason"] = this.finishReason ? this.finishReason.toJSON() : <any>undefined;
         data["modelId"] = this.modelId;
@@ -2998,6 +3001,7 @@ export interface IChatResponseUpdate {
     responseId?: string | undefined;
     messageId?: string | undefined;
     chatThreadId?: string | undefined;
+    conversationId?: string | undefined;
     createdAt?: Date | undefined;
     finishReason?: NullableOfChatFinishReason | undefined;
     modelId?: string | undefined;
@@ -3287,6 +3291,7 @@ export class McpServer implements IMcpServer {
     endpoint?: string | undefined;
     additionalHeaders?: { [key: string]: string; } | undefined;
     connectionTimeout?: number | undefined;
+    useStreamableHttp?: boolean;
     enable?: boolean;
     description?: string | undefined;
     tag?: string | undefined;
@@ -3333,6 +3338,7 @@ export class McpServer implements IMcpServer {
                 }
             }
             this.connectionTimeout = _data["connectionTimeout"];
+            this.useStreamableHttp = _data["useStreamableHttp"];
             this.enable = _data["enable"];
             this.description = _data["description"];
             this.tag = _data["tag"];
@@ -3377,6 +3383,7 @@ export class McpServer implements IMcpServer {
             }
         }
         data["connectionTimeout"] = this.connectionTimeout;
+        data["useStreamableHttp"] = this.useStreamableHttp;
         data["enable"] = this.enable;
         data["description"] = this.description;
         data["tag"] = this.tag;
@@ -3394,6 +3401,7 @@ export interface IMcpServer {
     endpoint?: string | undefined;
     additionalHeaders?: { [key: string]: string; } | undefined;
     connectionTimeout?: number | undefined;
+    useStreamableHttp?: boolean;
     enable?: boolean;
     description?: string | undefined;
     tag?: string | undefined;
@@ -3411,6 +3419,7 @@ export class McpServer2 implements IMcpServer2 {
     endpoint?: string | undefined;
     additionalHeaders?: { [key: string]: string; } | undefined;
     connectionTimeout?: number | undefined;
+    useStreamableHttp?: boolean;
     enable?: boolean;
     description?: string | undefined;
     tag?: string | undefined;
@@ -3457,6 +3466,7 @@ export class McpServer2 implements IMcpServer2 {
                 }
             }
             this.connectionTimeout = _data["connectionTimeout"];
+            this.useStreamableHttp = _data["useStreamableHttp"];
             this.enable = _data["enable"];
             this.description = _data["description"];
             this.tag = _data["tag"];
@@ -3501,6 +3511,7 @@ export class McpServer2 implements IMcpServer2 {
             }
         }
         data["connectionTimeout"] = this.connectionTimeout;
+        data["useStreamableHttp"] = this.useStreamableHttp;
         data["enable"] = this.enable;
         data["description"] = this.description;
         data["tag"] = this.tag;
@@ -3518,6 +3529,7 @@ export interface IMcpServer2 {
     endpoint?: string | undefined;
     additionalHeaders?: { [key: string]: string; } | undefined;
     connectionTimeout?: number | undefined;
+    useStreamableHttp?: boolean;
     enable?: boolean;
     description?: string | undefined;
     tag?: string | undefined;
@@ -3538,6 +3550,7 @@ export class McpServerCreateDto implements IMcpServerCreateDto {
     connectionTimeout?: number | undefined;
     description?: string | undefined;
     tag?: string | undefined;
+    useStreamableHttp?: boolean | undefined;
 
     [key: string]: any;
 
@@ -3584,6 +3597,7 @@ export class McpServerCreateDto implements IMcpServerCreateDto {
             this.connectionTimeout = _data["connectionTimeout"];
             this.description = _data["description"];
             this.tag = _data["tag"];
+            this.useStreamableHttp = _data["useStreamableHttp"];
         }
     }
 
@@ -3628,6 +3642,7 @@ export class McpServerCreateDto implements IMcpServerCreateDto {
         data["connectionTimeout"] = this.connectionTimeout;
         data["description"] = this.description;
         data["tag"] = this.tag;
+        data["useStreamableHttp"] = this.useStreamableHttp;
         return data;
     }
 }
@@ -3645,6 +3660,7 @@ export interface IMcpServerCreateDto {
     connectionTimeout?: number | undefined;
     description?: string | undefined;
     tag?: string | undefined;
+    useStreamableHttp?: boolean | undefined;
 
     [key: string]: any;
 }
@@ -3716,6 +3732,7 @@ export class McpServerUpdateDto implements IMcpServerUpdateDto {
     connectionTimeout?: number | undefined;
     description?: string | undefined;
     tag?: string | undefined;
+    useStreamableHttp?: boolean | undefined;
 
     [key: string]: any;
 
@@ -3760,6 +3777,7 @@ export class McpServerUpdateDto implements IMcpServerUpdateDto {
             this.connectionTimeout = _data["connectionTimeout"];
             this.description = _data["description"];
             this.tag = _data["tag"];
+            this.useStreamableHttp = _data["useStreamableHttp"];
         }
     }
 
@@ -3802,6 +3820,7 @@ export class McpServerUpdateDto implements IMcpServerUpdateDto {
         data["connectionTimeout"] = this.connectionTimeout;
         data["description"] = this.description;
         data["tag"] = this.tag;
+        data["useStreamableHttp"] = this.useStreamableHttp;
         return data;
     }
 }
@@ -3817,6 +3836,7 @@ export interface IMcpServerUpdateDto {
     connectionTimeout?: number | undefined;
     description?: string | undefined;
     tag?: string | undefined;
+    useStreamableHttp?: boolean | undefined;
 
     [key: string]: any;
 }
