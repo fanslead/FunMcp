@@ -8,6 +8,7 @@ global using FunMcp.Host.Exceptions;
 global using FunMcp.Host.Factory;
 global using FunMcp.Host.Options;
 global using FunMcp.Host.State;
+global using FunMcp.Host.AI.Tools;
 global using Microsoft.AspNetCore.Authentication;
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Diagnostics;

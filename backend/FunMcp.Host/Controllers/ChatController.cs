@@ -5,15 +5,15 @@
 public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerState, IMemoryCache memoryCache, IAIClientFactory aiClientFactory) : ControllerBase
 {
     private static string MCP_PROMPT = """
+
         ## 工具调用规则
         1. 请持续调用工具直至完美完成用户的任务，停止调用工具后，系统会自动交还控制权给用户。请只有在确定问题已解决后才终止调用工具。
         2. 请善加利用你的工具收集相关信息，绝对不要猜测或编造答案。
-        3. 若工具列表包含「思考」工具，在每次调用其他任务工具之前，你必须**首先调用思考工具**：针对用户的任务详细思考和规划，并对之前工具调用的结果进行深入反思（如有）。
-        - 「思考」工具不会获取新信息或更改数据库，只会将你的想法保存到记忆中。
+        3. 「思考和规划」是一个系统工具，在每次调用其他任务工具之前，你必须**首先调用思考和规划工具**：针对用户的任务详细思考和规划，并对之前工具调用的结果进行深入反思（如有），输出的顺序是thought, plan, action, thoughtNumber。
+        - 「思考和规划」工具不会获取新信息或更改数据库，只会将你的想法保存到记忆中。
         - 思考完成之后不需要等待工具返回，你可以继续调用其他任务工具，你一次可以调用多个任务工具。
-        - 任务工具调用完成之后，你可以停止输出，系统会把工具调用结果给你，你必须再次调用思考和规划工具，然后继续调用任务工具，如此循环，直到完成用户的任务。
-
-        """.Trim();
+        
+        """;
 
     [HttpPost]
     public async IAsyncEnumerable<ChatResponseUpdate> ChatAsync([FromBody] ChatRequestDto chatRequest, CancellationToken cancellationToken = default)
@@ -24,6 +24,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
         var dbMcpServers = await GetMcpServers(agent!.Id);
 
         var tools = new List<McpClientTool>();
+
         var systemPrompt = new StringBuilder(agent!.SystemPrompt);
         foreach (var dbMcpServer in dbMcpServers)
         {
@@ -37,18 +38,6 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
 
         if(tools.Count > 0)
         {
-            systemPrompt.AppendLine("");
-            systemPrompt.AppendLine("## Tool_Use：");
-            systemPrompt.AppendLine("可用的工具：");
-            foreach (var tool in tools)
-            {
-                systemPrompt.AppendLine($"- {tool.Name}: {tool.Description}");
-                if(tool.JsonSchema.TryGetProperty("properties", out var properties))
-                {
-                    systemPrompt.AppendLine($"  参数信息：{properties.ToString()}");
-                }
-            }
-
             systemPrompt.AppendLine(MCP_PROMPT);
         }
 
@@ -69,7 +58,7 @@ public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerS
             Temperature = agent.Temperature,
             TopP = agent.TopP,
             MaxOutputTokens = agent.MaxOutputTokens,
-            Tools = [.. tools ?? []]
+            Tools = [.. tools ?? [], Thinking.GetTool()]
         };
 
         var response = chatClient.GetStreamingResponseAsync(chatMessages, chatOptions, cancellationToken);
