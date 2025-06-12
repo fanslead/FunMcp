@@ -18,7 +18,6 @@ global using Microsoft.Extensions.Caching.Distributed;
 global using Microsoft.Extensions.Caching.Memory;
 global using Microsoft.Extensions.Options;
 global using ModelContextProtocol.Client;
-global using ModelContextProtocol.Protocol.Transport;
 global using OpenAI;
 global using Scalar.AspNetCore;
 global using System.ClientModel;

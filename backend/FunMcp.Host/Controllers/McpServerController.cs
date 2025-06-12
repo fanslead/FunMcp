@@ -196,7 +196,7 @@ public class McpServerController(FunMcpDbContext dbContext, McpServerState mcpSe
             await mcpServerState.CreateSseAsync(id, new SseClientTransport(new SseClientTransportOptions
             {
                 Name = mcpServer.Name,
-                UseStreamableHttp = mcpServer.UseStreamableHttp,
+                TransportMode = mcpServer.UseStreamableHttp ? HttpTransportMode.StreamableHttp : HttpTransportMode.AutoDetect,
                 Endpoint = new Uri(mcpServer.Endpoint!),
                 AdditionalHeaders = mcpServer.AdditionalHeaders,
                 ConnectionTimeout = mcpServer.ConnectionTimeout.HasValue ? TimeSpan.FromSeconds(mcpServer.ConnectionTimeout.Value) : TimeSpan.FromSeconds(30),
