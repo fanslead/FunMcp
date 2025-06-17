@@ -72,6 +72,20 @@ export function McpList(props: IMcpListProps) {
         }
     }
 
+    async function handleDelete(id: string) {
+        try {
+            setLoadingId(id); // 设置当前加载的开关 ID
+            await mcpServerService.mcpServerDELETE(id);
+            message.success('删除成功');
+            loadingData(); // 重新加载数据
+        } catch (error) {
+            console.error(error);
+            message.error('删除失败，请重试');
+        } finally {
+            setLoadingId(null); // 清除加载状态
+        }
+    }
+
 
     const render = (item: any) => (
         <div
@@ -132,12 +146,11 @@ export function McpList(props: IMcpListProps) {
                         checked={item.enable}
                         onChange={() => handleToggle(item.id!, item.enable)}
                     />
-                </div>
-                <div onClick={(e) => e.stopPropagation()}> {/* 阻止事件冒泡 */}
+                </div>                <div onClick={(e) => e.stopPropagation()}> {/* 阻止事件冒泡 */}
                     <Button
                         danger
                         icon={<DeleteOutlined />}
-                    // onClick={() => handleDelete(item.id!)}
+                        onClick={() => handleDelete(item.id!)}
                     />
                 </div>
             </div>
