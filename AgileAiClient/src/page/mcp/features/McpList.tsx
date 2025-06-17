@@ -150,7 +150,11 @@ export function McpList(props: IMcpListProps) {
                     <Button
                         danger
                         icon={<DeleteOutlined />}
-                        onClick={() => handleDelete(item.id!)}
+                        onClick={(e) => {
+                            e.stopPropagation(); // 阻止事件冒泡
+                            handleDelete(item.id!)
+                        }
+                    }
                     />
                 </div>
             </div>

@@ -19,30 +19,46 @@ interface IAppListProps {
     setInput: (input: any) => void;
 }
 
-export function AppList(props: IAppListProps) {
-
-    const navigate = useNavigate();
+export function AppList(props: IAppListProps) {    const navigate = useNavigate();
     const [data, setData] = useState<Application2[]>([]);
     const [total, setTotal] = useState(0);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     var applicationService = new ApplicationService();
 
-
-
     useEffect(() => {
         loadingData();
-    }, [props.input])
+    }, [props.input]);
 
     async function loadingData() {
         try {
             const data = await applicationService.applicationAll("");
-            if (data.length > 0) {
-                setData(data);
-                setTotal(data.length);
-            }
+            console.log('获取到的应用数据:', data);
+            // Always update the state regardless of data length
+            setData(data || []);
+            setTotal(data?.length || 0);
         } catch (error) {
             console.log(error);
             message.error('获取数据失败');
+        }
+    }    async function handleDelete(id: string) {
+        try {
+            setDeletingId(id); // 设置当前正在删除的ID
+            await applicationService.applicationDELETE(id);
+            message.success('应用删除成功');
+            
+            // 直接从本地状态中移除已删除的应用
+            setData(prevData => prevData.filter(item => item.id !== id));
+            
+            // 然后从服务器重新加载最新数据
+            setTimeout(() => {
+                loadingData();
+            }, 300);
+        } catch (error) {
+            console.error(error);
+            message.error('删除失败，请重试');
+        } finally {
+            setDeletingId(null); // 清除删除状态
         }
     }
 
@@ -87,14 +103,19 @@ export function AppList(props: IAppListProps) {
                 </div>
 
                
-            </Flexbox>
-            <Button
+            </Flexbox>            <Button
                 style={{ 
                     float: 'inline-end',
                     position: 'absolute',
                     right: 16,
                 }}
-                icon={<DeleteOutlined />}
+                danger
+                loading={deletingId === item.id}
+                icon={!deletingId || deletingId !== item.id ? <DeleteOutlined /> : null}
+                onClick={(e) => {
+                    e.stopPropagation(); // 阻止事件冒泡
+                    handleDelete(item.id!);
+                }}
             />
         </Flexbox>
     )
