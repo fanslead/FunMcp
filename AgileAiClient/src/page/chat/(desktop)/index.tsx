@@ -5,8 +5,9 @@ import Divider from "@lobehub/ui/es/Form/components/FormDivider";
 import { Button, message } from 'antd'
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { CreateDialog } from "../../chat/features/CreateDialog";
+import { EditDialog } from "../../chat/features/EditDialog";
 import ChatInput from "../../chat/features/ChatInput";
 import { Flexbox } from 'react-layout-kit';
 import ChatAppList from "../features/ChatAppList";
@@ -47,10 +48,11 @@ export default function DesktopLayout() {
     const [application, setApplication] = useState({} as Application);
 
 
-    const [dialogs, setDialogs] = useState([] as Agent[]);
-    const [dialog, setDialog] = useState({} as Agent);
+    const [dialogs, setDialogs] = useState([] as Agent[]);    const [dialog, setDialog] = useState({} as Agent);
 
     const [createDialogVisible, setCreateDialogVisible] = useState(false);
+    const [editDialogVisible, setEditDialogVisible] = useState(false);
+    const [currentAgentId, setCurrentAgentId] = useState<string>("");
 
     const [history, setHistory] = useState([] as any[]);
 
@@ -218,16 +220,26 @@ export default function DesktopLayout() {
                             }}>
                             <Tooltip title={item.description}>
                                 {item.name}
-                            </Tooltip>
-                            <Button
-                                style={{
-                                    float: 'inline-end',
-                                }}
-                                size='small'
-                                icon={<DeleteOutlined />}
-                                onClick={() => deleteDialog(item.id)}
-
-                            />
+                            </Tooltip>                            <div style={{ float: 'inline-end' }}>
+                                <Button
+                                    size='small'
+                                    icon={<EditOutlined />}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // 阻止事件冒泡，避免触发DialogItem的点击事件
+                                        setCurrentAgentId(item.id);
+                                        setEditDialogVisible(true);
+                                    }}
+                                    style={{ marginRight: 4 }}
+                                />
+                                <Button
+                                    size='small'
+                                    icon={<DeleteOutlined />}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // 阻止事件冒泡，避免触发DialogItem的点击事件
+                                        deleteDialog(item.id)
+                                    }}
+                                />
+                            </div>
                         </DialogItem>
                     })
                 }
@@ -261,12 +273,22 @@ export default function DesktopLayout() {
                     setHistory(v);
                 }
                 } history={history} />
-            </DraggablePanel>
-            <CreateDialog visible={createDialogVisible} id={application?.id} onClose={() => {
+            </DraggablePanel>            <CreateDialog visible={createDialogVisible} id={application?.id} onClose={() => {
                 setCreateDialogVisible(false);
                 loadingDialogs();
             }}
             onSuccess={() => console.log('创建成功')} />
+            <EditDialog 
+                visible={editDialogVisible} 
+                agentId={currentAgentId}
+                onClose={() => {
+                    setEditDialogVisible(false);
+                }}
+                onSuccess={() => {
+                    loadingDialogs();
+                    message.success('Agent更新成功');
+                }}
+            />
         </Flexbox>
     </Flexbox>
 }

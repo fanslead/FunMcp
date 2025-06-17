@@ -2920,7 +2920,6 @@ export class ChatResponseUpdate implements IChatResponseUpdate {
     additionalProperties?: any | undefined;
     responseId?: string | undefined;
     messageId?: string | undefined;
-    chatThreadId?: string | undefined;
     conversationId?: string | undefined;
     createdAt?: Date | undefined;
     finishReason?: NullableOfChatFinishReason | undefined;
@@ -2953,7 +2952,6 @@ export class ChatResponseUpdate implements IChatResponseUpdate {
             this.additionalProperties = _data["additionalProperties"];
             this.responseId = _data["responseId"];
             this.messageId = _data["messageId"];
-            this.chatThreadId = _data["chatThreadId"];
             this.conversationId = _data["conversationId"];
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
             this.finishReason = _data["finishReason"] ? NullableOfChatFinishReason.fromJS(_data["finishReason"]) : <any>undefined;
@@ -2984,7 +2982,6 @@ export class ChatResponseUpdate implements IChatResponseUpdate {
         data["additionalProperties"] = this.additionalProperties;
         data["responseId"] = this.responseId;
         data["messageId"] = this.messageId;
-        data["chatThreadId"] = this.chatThreadId;
         data["conversationId"] = this.conversationId;
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
         data["finishReason"] = this.finishReason ? this.finishReason.toJSON() : <any>undefined;
@@ -3000,7 +2997,6 @@ export interface IChatResponseUpdate {
     additionalProperties?: any | undefined;
     responseId?: string | undefined;
     messageId?: string | undefined;
-    chatThreadId?: string | undefined;
     conversationId?: string | undefined;
     createdAt?: Date | undefined;
     finishReason?: NullableOfChatFinishReason | undefined;
