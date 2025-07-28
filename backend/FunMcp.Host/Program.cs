@@ -23,6 +23,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<ChatService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -54,7 +56,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(app =>
 {
-    app.AllowAnyOrigin()
+    app.SetIsOriginAllowed(_ => true)
+        .AllowAnyOrigin()
        .AllowAnyMethod()
        .AllowAnyHeader();
 });
@@ -65,6 +68,11 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapPost("/api/chat", (ChatRequestDto chatRequest, ChatService chatService, CancellationToken cancellationToken) => 
+{
+   return TypedResults.ServerSentEvents(chatService.ChatAsync(chatRequest));
+});
 
 app.MapControllers();
 

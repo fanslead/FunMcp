@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 namespace FunMcp.Host.Scalar;
 
@@ -12,7 +12,7 @@ public sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvide
         {
             // Add the security scheme at the document level
             var requirements = new Dictionary<string,
-        OpenApiSecurityScheme>
+        IOpenApiSecurityScheme>
             {
                 ["Bearer"] = new OpenApiSecurityScheme
                 {
@@ -28,17 +28,17 @@ public sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvide
             // Apply it as a requirement for all operations
             foreach (var operation in document.Paths.Values.SelectMany(path => path.Operations))
             {
-                operation.Value.Security.Add(new OpenApiSecurityRequirement
-                {
-                    [new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Id = "Bearer",
-                            Type = ReferenceType.SecurityScheme
-                        }
-                    }] = Array.Empty<string>()
-                });
+                //operation.Value.Security.Add(new OpenApiSecurityRequirement
+                //{ 
+                //    [new OpenApiSecurityScheme
+                //    {
+                //        Reference = new OpenApiReference
+                //        {
+                //            Id = "Bearer",
+                //            Type = ReferenceType.SecurityScheme
+                //        }
+                //    }] = Array.Empty<string>()
+                //});
             }
         }
     }
