@@ -117,6 +117,10 @@ export async function* fetchStream(url: string, requestBody: any, apiKey: string
     body: JSON.stringify(requestBody),
   });
 
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
   if (!response.body) {
     throw new Error('Response body is null');
   }
@@ -132,39 +136,64 @@ export async function* fetchStream(url: string, requestBody: any, apiKey: string
     done = readerDone;
 
     if (value) {
-      buffer += decoder.decode(value, { stream: true }); // 拼接 chunk 到 buffer
+      buffer += decoder.decode(value, { stream: true });
       
-      // 查找完整的 JSON 对象
-      try {
-        // 尝试寻找最后一个合法的 JSON 结构
-        // 假设每个响应块包含 JSON 数组
-        if (buffer.trim().startsWith('[') && buffer.trim().endsWith(']')) {
-          // 如果是完整的数组格式
-          JSON.parse(buffer); // 尝试解析，如果失败会进入 catch
-          yield buffer;
-          buffer = ''; // 清空缓冲区
-        } else {
-          // 尝试找到最后一个完整的 JSON 数组
-          const result = findLastCompleteJsonArray(buffer);
-          if (result) {
-            yield result.completeJson;
-            buffer = result.remainder; // 保存剩余部分到缓冲区
+      // 按行分割 SSE 数据
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // 保留最后一行（可能不完整）
+      
+      for (const line of lines) {
+        // 处理 SSE message 事件
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6); // 移除 'data: ' 前缀
+          
+          // 跳过心跳或结束标志
+          if (data === '' || data === '[DONE]' || data.trim() === '') {
+            continue;
+          }
+          
+          try {
+            // 解析 JSON 数据并返回
+            const jsonData = JSON.parse(data);
+            yield JSON.stringify(jsonData);
+          } catch (error) {
+            console.warn('SSE data is not valid JSON:', data, error);
+            // 对于非 JSON 数据，直接返回原始内容
+            yield data;
           }
         }
-      } catch (error) {
-        console.warn('Stream chunk is not complete JSON yet, buffering...');
-        // 继续累积数据到下一次迭代
+        // 处理其他 SSE 事件类型（如果需要）
+        else if (line.startsWith('event: ')) {
+          const eventType = line.slice(7);
+          console.log('SSE event type:', eventType);
+        }
+        else if (line.startsWith('id: ')) {
+          const eventId = line.slice(4);
+          console.log('SSE event id:', eventId);
+        }
+        else if (line.startsWith('retry: ')) {
+          const retryTime = line.slice(7);
+          console.log('SSE retry time:', retryTime);
+        }
       }
     }
   }
   
   // 处理最后可能剩余的数据
   if (buffer.trim()) {
-    try {
-      const fixedJson = fixIncompleteJson(buffer);
-      yield fixedJson;
-    } catch (err) {
-      console.error('Could not fix final chunk of JSON data:', err);
+    const lines = buffer.split('\n');
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data && data !== '[DONE]') {
+          try {
+            const jsonData = JSON.parse(data);
+            yield JSON.stringify(jsonData);
+          } catch (error) {
+            yield data;
+          }
+        }
+      }
     }
   }
 }

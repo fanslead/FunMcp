@@ -108,86 +108,105 @@ export default function ChatInput({
             let url = '/api/Chat'
 
             let mcpMessage = [];
+            let usageDetials = {
+                inputTokenCount: 0,
+                outputTokenCount: 0,
+                totalTokenCount: 0
+            }
             try {
                 let stream = await fetchStream(url, requestInput, String(application.apiKey));
 
 
                 for await (const chunk of stream) {
-                    let messages;
+                    let message;
                     try {
-                        messages = JSON.parse(chunk);
+                        message = JSON.parse(chunk);
                     } catch (jsonError) {
                         console.error('JSON解析错误:', jsonError, '原始数据:', chunk);
                         continue; // 跳过这个块，处理下一个
                     }
                     // 检查当前消息块中是否有结束标志
-                    const hasStopMessage = messages.some((msg: any) => msg.finishReason === "stop");
+                    const hasStopMessage = message.finishReason === "stop";
                     if (hasStopMessage) {
-                        for (let index = 0; index < messages.length; index++) {
-                            const aaaaa = messages[index];
-                            // 忽略空行
-                            if (aaaaa.contents.length <= 0) {
-                                continue;
-                            }
-                            if (aaaaa.contents[0].$type == "functionResult") {
-                                try {
-                                    // 提取 functionResult 的 content
-                                    const functionResultContent = aaaaa.contents[0]?.result.content?.[0]?.text ?? "";
-                                    if (functionResultContent) {
-                                        mcpMessage.push(functionResultContent);
-                                    }
-                                } catch (error) {
-                                    console.error("Error processing functionResult content:", error);
+                        if (message.contents.length <= 0) {
+                            continue;
+                        }
+                        if (message.contents[0].$type == "functionResult") {
+                            try {
+                                // 提取 functionResult 的 content
+                                const functionResultContent = message.contents[0]?.result.content?.[0]?.text ?? "";
+                                if (functionResultContent) {
+                                    mcpMessage.push(functionResultContent);
                                 }
+                            } catch (error) {
+                                console.error("Error processing functionResult content:", error);
                             }
                         }
                     }
+                    if (message.contents.length <= 0) {
+                        continue;
+                    }
 
-                    for (let index = 0; index < messages.length; index++) {
-                        const aaaaa = messages[index];
-                        // 忽略空行
-                        if (aaaaa.contents.length <= 0) {
-                            continue;
+                    try {
+                        if (message.contents[0].$type == "usage") {
+                            console.log(message)
+                            const details = message.contents[0].details;
+                            usageDetials.inputTokenCount += details.inputTokenCount;
+                            usageDetials.outputTokenCount += details.outputTokenCount;
+                            usageDetials.totalTokenCount += details.totalTokenCount;
                         }
-
-                        try {
-                            // 如果是结束标志，停止接收数据
-                            if (aaaaa.finishReason === "stop") {
-                                // 统计 MCP 调用次数和内容
-                                const mcpCallCount = mcpMessage.length;
-                                const mcpCallDetails = mcpMessage.map((msg: any, index: any) => `调用 ${index + 1}:\n${msg}`).join("\n\n");
-
-                                // 将统计信息添加到对话内容
-                                chat.content += `MCP 调用统计：
-                            总调用次数: ${mcpCallCount}`;
-
-                                if (mcpCallCount > 0) {
-                                    chat.content += '\n\n详细内容： \n```txt\n' + mcpCallDetails;
-                                    chat.content += '\n```';
+                        if (message.contents[0].$type == "functionResult") {
+                            try {
+                                // 提取 functionResult 的 content
+                                const functionResultContent = message.contents[0]?.result.content?.[0]?.text ?? "";
+                                if (functionResultContent) {
+                                    mcpMessage.push(functionResultContent);
                                 }
-                                setLoading(false);
-                                break;
+                            } catch (error) {
+                                console.error("Error processing functionResult content:", error);
                             }
-                            let content = "";
-                            if (aaaaa.contents[0].$type == "text") {
-                                content = aaaaa.contents[0].text;
-
-                                chat.content += content;
-                            }
-
-                            // 更新 assistant 的对话内容
-                            chat.id = aaaaa.responseId;
-
-                            // 更新历史记录
-                            setHistory([...history, chat]);
-
-                            // 滚动到底部
-                            if (chatlayout) {
-                                chatlayout.scrollTop = chatlayout.scrollHeight;
-                            }
-                        } catch (error) {
-                            console.error('Error parsing stream data:', error);
                         }
+                        // 如果是结束标志，停止接收数据
+                        if (message.finishReason === "stop") {
+                            // 统计 MCP 调用次数和内容
+                            const mcpCallCount = mcpMessage.length;
+                            const mcpCallDetails = mcpMessage.map((msg: any, index: any) => `调用 ${index + 1}:\n${msg}`).join("\n\n");
+
+                            // 将统计信息添加到对话内容
+                            chat.content += `\n\nMCP 调用统计：
+                        总调用次数: ${mcpCallCount}`;
+
+                            if (mcpCallCount > 0) {
+                                chat.content += '\n\n详细内容： \n```txt\n' + mcpCallDetails;
+                                chat.content += '\n```';
+                            }
+
+                            
+                            chat.content += '\n\nTokenx消耗： \n```txt\n输入Token: ' + usageDetials.inputTokenCount + '\n' + '输出Token: '+usageDetials.outputTokenCount +'\n总计Token: ' + usageDetials.totalTokenCount + '\n';
+                            chat.content += '\n```';
+
+                            setLoading(false);
+                            break;
+                        }
+                        let content = "";
+                        if (message.contents[0].$type == "text") {
+                            content = message.contents[0].text;
+
+                            chat.content += content;
+                        }
+
+                        // 更新 assistant 的对话内容
+                        chat.id = message.responseId;
+
+                        // 更新历史记录
+                        setHistory([...history, chat]);
+
+                        // 滚动到底部
+                        if (chatlayout) {
+                            chatlayout.scrollTop = chatlayout.scrollHeight;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing stream data:', error);
                     }
                 }
             } catch (error) {
