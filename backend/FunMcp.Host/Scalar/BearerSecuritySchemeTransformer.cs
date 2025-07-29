@@ -24,22 +24,6 @@ public sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvide
             };
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes = requirements;
-
-            // Apply it as a requirement for all operations
-            foreach (var operation in document.Paths.Values.SelectMany(path => path.Operations))
-            {
-                //operation.Value.Security.Add(new OpenApiSecurityRequirement
-                //{ 
-                //    [new OpenApiSecurityScheme
-                //    {
-                //        Reference = new OpenApiReference
-                //        {
-                //            Id = "Bearer",
-                //            Type = ReferenceType.SecurityScheme
-                //        }
-                //    }] = Array.Empty<string>()
-                //});
-            }
         }
     }
 }

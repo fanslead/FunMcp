@@ -4,6 +4,12 @@
 [ApiController]
 public class ChatController(FunMcpDbContext dbContext, McpServerState mcpServerState, IMemoryCache memoryCache, IAIClientFactory aiClientFactory, ChatService chatService) : ControllerBase
 {
+    [HttpPost]
+    public ServerSentEventsResult<ChatResponseUpdate> ChatAsync([FromBody]ChatRequestDto chatRequest, CancellationToken cancellationToken = default)
+    {
+        return TypedResults.ServerSentEvents(chatService.ChatAsync(chatRequest));
+    }
+
     [HttpGet]
     [Route("agent/tools/{agentId}")]
     public async Task<Dictionary<string, IList<McpClientToolDto>>> GetAgentTools(string agentId)

@@ -69,11 +69,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapPost("/api/chat", (ChatRequestDto chatRequest, ChatService chatService, CancellationToken cancellationToken) => 
-{
-   return TypedResults.ServerSentEvents(chatService.ChatAsync(chatRequest));
-});
-
 app.MapControllers();
 
 app.Run();
